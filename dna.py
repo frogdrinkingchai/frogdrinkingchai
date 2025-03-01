@@ -32,15 +32,6 @@ tempo = 120 #initialize Pygame mixer
 
 #innitialize Pygame mixer
 pygame.mixer.init()
-
-def display_sequences(): 
-    # Function that allows user to display their sequences
-    if sequences:
-        print("\nStored Sequences: ")
-        for index, seq in enumerate(sequences, start=1):
-            print(f"{index}: {seq}")
-    else:
-        print("\nThere are no sequences stored. ")
         
 def ask_for_data(): #Prompts the user for a unique DNA sequence and stores it if unique and fits input criteria
     global dna_sequence
@@ -69,7 +60,7 @@ def dna_melody_convert(dna_sequence):
     melody = []
     prev_base = None
     counter = 0
-    
+
     for base in dna_sequence:
         if base == prev_base:
             counter += 1
@@ -83,6 +74,7 @@ def dna_melody_convert(dna_sequence):
         melody.append((DNA_TO_NOTES[prev_base], counter))
         
     return melody
+
 
 def store_melodies():
    """This function receives all the DNA sequences that were stored,
@@ -141,6 +133,14 @@ def display_melodies():# Function that allows user to display their melodies as 
     else:
         print("\nThere are no melodies stored. ")
         
+def display_sequences(): 
+    # Function that allows user to display their sequences
+    if sequences:
+        print("\nStored Sequences: ")
+        for index, seq in enumerate(sequences, start=1):
+            print(f"{index}: {seq}")
+    else:
+        print("\nThere are no sequences stored. ")
         
 def play_melody(melody):
     seconds_per_beat = 60 / tempo
@@ -158,13 +158,6 @@ def play_melody(melody):
                 print(f"Error with {note}: {r}")
 
     print("Melody Complete...")
-
-def end_program():
-    global program_running
-    program_running = False
-    print("Exiting Project...")
-    exit()
-
 
 def menu_prompt():
     while True:
@@ -211,8 +204,13 @@ def menu_prompt():
                         end_program()
         else:
             print("Invalid, please enter a valid input.")                    
-        
 
+def end_program():
+    global program_running
+    program_running = False
+    print("Exiting Project...")
+    exit()     
+    
 def main(): # Main Loop
     try:
         while True:
