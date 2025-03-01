@@ -1,7 +1,7 @@
 import re
 import pygame
 import time
-import json
+
 
 # Constant variables for DNA bases
 ADENINE = "A"
@@ -26,11 +26,9 @@ NOTE_FILES = {
 
 program_running = True
 sequences = [] #Stores valid DNA sequences
-dna_sequence = ("")  # Innitialized an indivudal dna sequence
+dna_sequence = ("")  # Initialize an individual dna sequence
 melodies = []  #Stores melodies generated from DNA sequences
-tempo = 120 #Innitializes tempo (BPM) for playback to 120
-MELODY_FILE = "melodies.json"
-melodies_data = {}
+tempo = 120 #initialize Pygame mixer
 
 #innitialize Pygame mixer
 pygame.mixer.init()
@@ -44,7 +42,7 @@ def display_sequences():
     else:
         print("\nThere are no sequences stored. ")
         
-def ask_for_data(): #Prompts the user for a unique DNA sequence and stores it if unique and fits input criteriea
+def ask_for_data(): #Prompts the user for a unique DNA sequence and stores it if unique and fits input criteria
     global dna_sequence
     while True: 
         try:
@@ -54,11 +52,11 @@ def ask_for_data(): #Prompts the user for a unique DNA sequence and stores it if
                 print("Invalid input, please only enter 'A' 'G' 'C' and 'T'.")
                 continue
             
-            if dna_sequence in sequences:
+            if dna_sequence in sequences: #Prevents duplicate sequences
                 print("This sequence has already been entered. Please attempt a new sequence.")
                 continue
             
-            print("Your sequence was stored.")
+            print("Your sequence was stored.") #Stores sequence in list
             sequences.append(dna_sequence)
             break
         
@@ -67,7 +65,7 @@ def ask_for_data(): #Prompts the user for a unique DNA sequence and stores it if
 
 
 def dna_melody_convert(dna_sequence):
-    """Converts a DNA sequence into a mledoy based on notes corresponding with wav files"""
+    """Converts a DNA sequence into a melody based on notes corresponding with wav files"""
     melody = []
     prev_base = None
     counter = 0
@@ -85,41 +83,53 @@ def dna_melody_convert(dna_sequence):
         melody.append((DNA_TO_NOTES[prev_base], counter))
         
     return melody
-    
+
 def store_melodies():
-    """This function recieves all the DNA sequences that were stored, 
-    and converts them into musical melodies.
-    It then saves them into a JSON file."""
-    
-    global melodies
-    melodies.clear() #clears the old melody storage to account for duplicates
-    melodies_data = {"melodies": []} #creates a dictionary that stores multiple melodies
+   """This function receives all the DNA sequences that were stored,
+   and converts them into musical melodies."""
+  
+   global melodies
+   melodies.clear() #clears the old melody storage to account for duplicates
 
-    for seq in sequences:
-        melody = dna_melody_convert(seq)
-        melodies.append(melody) #Stores the melody in global melodies list
+   for seq in sequences:
+       melody = dna_melody_convert(seq)
+       melodies.append(melody) #Stores the melody in global melodies list
 
-        melodies_data["melodies"].append({"sequence": seq, "notes": melody})
+def add_melody():
+    while True: 
+        try:
+            new_sequence = str(input("Please enter a AGCT sequence: ")).upper().strip().replace(" ", "")
+            
+            if not re.fullmatch(r'[AGCT]+', new_sequence): #If input does not contain correct characters, restart loop, re-ask question
+                print("Invalid input, please only enter 'A' 'G' 'C' and 'T'.")
+                continue
+            
+            if new_sequence in sequences: #Prevents duplicate sequences
+                print("This sequence has already been entered. Please attempt a new sequence.")
+                continue
+            
+            print("Your sequence was stored.") #Stores sequence in list
+            sequences.append(new_sequence)
+            new_melody = dna_melody_convert(new_sequence)
+            melodies.append(new_melody)
+            break #Exits loop
+        
+        except ValueError as error:
+            print(error)
 
-    with open(MELODY_FILE, "w") as file:
-        json.dump(melodies_data, file, indent=4)
-
-    print(f"Melodies were saved to {MELODY_FILE}")
-
-    print(melodies)
-
-def load_melodies():
-
-    global melodies
-
+def delete_melody(melody_number):
     try:
-        with open(MELODY_FILE, "r") as file:
-            melodies = json.load(melodies_data, file, indent=4)
-        print("Your melodies have sucessfully loaded.")
+        melody_to_delete = melodies[melody_number] #Removed the inputted melody number from melodies list
+        melodies.remove(melody_to_delete)
 
-    except(FileNotFoundError, json.JSONDecodeError):
-        print("Loading JSON has failed, apologies. Program assumes no stored melodies. ")
-        melodies = []
+        sequence_to_delete = sequences[melody_number] #Removed the sequence from sequences list
+        sequences.remove(sequence_to_delete)
+
+        print(f"Melody {melody_number + 1} has been deleted.") #Adds 1 because index starts at 0
+
+    except IndexError:
+        print("Invalid index!")
+
 
 def display_melodies():# Function that allows user to display their melodies as a list
     
@@ -147,7 +157,7 @@ def play_melody(melody):
             except pygame.error as r:
                 print(f"Error with {note}: {r}")
 
-    print("Melody Complete...Loading...")
+    print("Melody Complete...")
 
 def end_program():
     global program_running
@@ -155,14 +165,17 @@ def end_program():
     print("Exiting Project...")
     exit()
 
+
 def menu_prompt():
     while True:
-        user_choice = input("Press a to view sequences, b to view melody, c to play melodies, q to quit: ").lower()
+        user_choice = input("\nPress:\nA to add a melody.\nB to view melody list.\nC to play a melody.\nD view sequences list.\nR to remove a melody.\nQ to quit.\n ").lower()
 
-        if user_choice == "a":
+        if user_choice == "d":
             display_sequences()
+
         elif user_choice == "b":
             display_melodies()
+
         elif user_choice == "c":
             if melodies:
                 try:
@@ -172,13 +185,33 @@ def menu_prompt():
                     else:
                         print("There is no melody with that index.")
                 except ValueError:
-                    print("Invalid input. Please enter an integer :) ")
+                    print("\nInvalid input. Please enter an integer :) ")
             else:
                 print("It appears you have no melodies to select, please restart the program.")
+
+        elif user_choice == "a":
+                add_melody()
+
+        elif user_choice == "r":
+            if melodies:
+                    try:
+                        melody_num = int(input("Which melody would you like to delete?: ")) - 1
+                        if 0 <= melody_num < len(melodies):   
+                            delete_melody(melody_num)
+                        else:
+                            print("There is no melody with that index.")
+                            
+                    except ValueError:
+                        print("Invalid input. Please enter an integer :) ")
+                        
+            else:
+                print("It appears you have no melodies to select, please restart the program.")
+
         elif user_choice == "q":
-            end_program()
+                        end_program()
         else:
-            print("Invalid, please enter a valid input.")
+            print("Invalid, please enter a valid input.")                    
+        
 
 def main(): # Main Loop
     try:
@@ -206,9 +239,6 @@ def main(): # Main Loop
 
         for i in range(num_sequences):
             ask_for_data()
-            
-        global melodies
-        store_melodies() #updates global list of melodies
 
         global tempo
         while True:
@@ -222,6 +252,8 @@ def main(): # Main Loop
 
             except ValueError:
                 print("Invalid input. Please enter a valid bpm/number, reccomended over 60.")
+        
+        store_melodies()
 
         while True:     
             menu_prompt()
@@ -233,7 +265,5 @@ if __name__ == "__main__":
     print("Hello, welcome to DJ DNA 🎵.")
     print()
     print("This is a musical generator that will take an inputted sequence of DNA, and output a series of musical notes in accordance. Enjoy!")
-    print("DNA Sequences are determined by the four chemical bases that make up DNA: Adenine (A), Thymine (T), Cytosine (C), and Guanine (G).")
-
-
+    print("DNA Sequences are determined by the four chemical bases that make up DNA: Adenine (A), Thymine (T), Cytosine (C), and Guanine (G).\n")       
     main()
