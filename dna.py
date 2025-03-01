@@ -233,6 +233,7 @@ if __name__ == "__main__":
     print("Hello, welcome to DJ DNA 🎵.")
     print()
     print("This is a musical generator that will take an inputted sequence of DNA, and output a series of musical notes in accordance. Enjoy!")
-            
+    print("DNA Sequences are determined by the four chemical bases that make up DNA: Adenine (A), Thymine (T), Cytosine (C), and Guanine (G).")
+
 
     main()
